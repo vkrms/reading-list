@@ -1,15 +1,20 @@
 import React, { useState } from 'react'
-import { Plus, Link, Loader2 } from 'lucide-react'
+import { Plus, Link, Loader2, AlertTriangle } from 'lucide-react'
+import type { Database } from '../lib/supabase'
+
+type ReadingListItem = Database['public']['Tables']['reading_list_items']['Row']
 
 interface AddUrlFormProps {
   onAdd: (url: string, openGraphData: any) => Promise<void>
+  existingItems: ReadingListItem[]
 }
 
-export function AddUrlForm({ onAdd }: AddUrlFormProps) {
+export function AddUrlForm({ onAdd, existingItems }: AddUrlFormProps) {
   const [url, setUrl] = useState('')
   const [openGraphData, setOpenGraphData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [fetchingData, setFetchingData] = useState(false)
+  const [duplicateItem, setDuplicateItem] = useState<ReadingListItem | null>(null)
 
   const fetchOpenGraphData = async (url: string) => {
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-opengraph`
@@ -31,12 +36,29 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
     return await response.json()
   }
 
+  const checkForDuplicate = (url: string) => {
+    const normalizedUrl = url.toLowerCase().trim()
+    return existingItems.find(item => 
+      item.url.toLowerCase().trim() === normalizedUrl
+    ) || null
+  }
+
   const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pastedText = e.clipboardData.getData('text')
     
     // Check if pasted text looks like a URL
     try {
       new URL(pastedText)
+      
+      // Check for duplicates first
+      const duplicate = checkForDuplicate(pastedText)
+      if (duplicate) {
+        setDuplicateItem(duplicate)
+        setOpenGraphData(null)
+        return
+      }
+      
+      setDuplicateItem(null)
       setFetchingData(true)
       
       try {
@@ -51,6 +73,7 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
     } catch {
       // Not a valid URL, ignore
       setOpenGraphData(null)
+      setDuplicateItem(null)
     }
   }
 
@@ -61,6 +84,21 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
     // Clear OpenGraph data if URL is cleared or changed significantly
     if (!newUrl || (openGraphData && !newUrl.includes(new URL(openGraphData.url || '').hostname))) {
       setOpenGraphData(null)
+      setDuplicateItem(null)
+    }
+    
+    // Check for duplicates on manual input
+    if (newUrl) {
+      try {
+        new URL(newUrl)
+        const duplicate = checkForDuplicate(newUrl)
+        setDuplicateItem(duplicate)
+        if (duplicate) {
+          setOpenGraphData(null)
+        }
+      } catch {
+        setDuplicateItem(null)
+      }
     }
   }
 
@@ -122,6 +160,27 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
           )}
         </div>
 
+        {duplicateItem && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-medium text-amber-800 mb-1">Article Already Added</h4>
+              <p className="text-sm text-amber-700 mb-2">
+                This article is already in your reading list:
+              </p>
+              <div className="bg-white rounded-md p-3 border border-amber-200">
+                <h5 className="font-medium text-gray-900 text-sm mb-1">
+                  {duplicateItem.title}
+                </h5>
+                <p className="text-xs text-gray-600">
+                  Added {new Date(duplicateItem.created_at).toLocaleDateString()} • 
+                  {duplicateItem.is_read ? ' Read' : ' Unread'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {openGraphData && (
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <h3 className="font-medium text-gray-900 mb-2">Preview:</h3>
@@ -155,7 +214,7 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
 
         <button
           type="submit"
-          disabled={loading || !url.trim() || !openGraphData || fetchingData}
+          disabled={loading || !url.trim() || !openGraphData || fetchingData || duplicateItem}
           className="w-full max-w-sm mx-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2"
         >
           {loading ? (
@@ -163,6 +222,8 @@ export function AddUrlForm({ onAdd }: AddUrlFormProps) {
               <Loader2 className="w-4 h-4 animate-spin" />
               Adding to reading list...
             </>
+          ) : duplicateItem ? (
+            'Article already in reading list'
           ) : !openGraphData && url ? (
             'Paste a URL to fetch article data'
           ) : (

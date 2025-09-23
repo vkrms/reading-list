@@ -83,7 +83,7 @@ export function ReadingList() {
 
       <main className="max-w-4xl mx-auto px-4 py-8 w-fit">
         {/* Add URL Form */}
-        <AddUrlForm onAdd={handleAddUrl} />
+        <AddUrlForm onAdd={handleAddUrl} existingItems={items} />
 
         {/* Stats and Filter */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
