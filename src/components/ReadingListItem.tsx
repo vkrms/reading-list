@@ -71,7 +71,7 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
           </h3>
 
           {item.description && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2 max-w-[64ch]">
               {item.description}
             </p>
           )}

@@ -81,7 +81,7 @@ export function ReadingList() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 w-fit">
         {/* Add URL Form */}
         <AddUrlForm onAdd={handleAddUrl} />
 
@@ -141,7 +141,7 @@ export function ReadingList() {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 w-fit">
             {filteredItems.map((item) => (
               <ReadingListItem
                 key={item.id}
