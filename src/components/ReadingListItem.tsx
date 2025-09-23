@@ -1,0 +1,162 @@
+import React, { useState } from 'react'
+import { ExternalLink, Check, X, Trash2, BookOpen } from 'lucide-react'
+import type { Database } from '../lib/supabase'
+
+type ReadingListItem = Database['public']['Tables']['reading_list_items']['Row']
+
+interface ReadingListItemProps {
+  item: ReadingListItem
+  onToggleRead: (id: string, isRead: boolean) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+}
+
+export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListItemProps) {
+  const [loading, setLoading] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const handleToggleRead = async () => {
+    setLoading(true)
+    try {
+      await onToggleRead(item.id, !item.is_read)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setLoading(true)
+    try {
+      await onDelete(item.id)
+    } finally {
+      setLoading(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+
+  return (
+    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 border-l-4 ${
+      item.is_read ? 'border-emerald-400 opacity-75' : 'border-blue-400'
+    }`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            {item.is_read ? (
+              <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                <Check className="w-3 h-3" />
+                Read
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                <BookOpen className="w-3 h-3" />
+                Unread
+              </div>
+            )}
+            <span className="text-xs text-gray-500">
+              Added {formatDate(item.created_at)}
+            </span>
+          </div>
+
+          <h3 className={`text-lg font-semibold mb-2 ${
+            item.is_read ? 'text-gray-600 line-through' : 'text-gray-900'
+          }`}>
+            {item.title}
+          </h3>
+
+          {item.description && (
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+              {item.description}
+            </p>
+          )}
+
+          <div className="flex items-center gap-2">
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Read Article
+            </a>
+            <span className="text-gray-400">•</span>
+            <span className="text-xs text-gray-500 truncate max-w-xs">
+              {new URL(item.url).hostname}
+            </span>
+          </div>
+        </div>
+
+        {item.image_url && (
+          <div className="flex-shrink-0 w-20 h-20">
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="w-full h-full object-cover rounded-lg"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+        <button
+          onClick={handleToggleRead}
+          disabled={loading}
+          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+            item.is_read
+              ? 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
+              : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+          }`}
+        >
+          {item.is_read ? (
+            <>
+              <X className="w-4 h-4" />
+              Mark Unread
+            </>
+          ) : (
+            <>
+              <Check className="w-4 h-4" />
+              Mark as Read
+            </>
+          )}
+        </button>
+
+        {showDeleteConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Delete this item?</span>
+            <button
+              onClick={handleDelete}
+              disabled={loading}
+              className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition-colors"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400 transition-colors"
+            >
+              No
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
