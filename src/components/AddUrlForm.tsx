@@ -66,7 +66,13 @@ export function AddUrlForm({ onAdd, existingItems }: AddUrlFormProps) {
         setOpenGraphData(data)
       } catch (error) {
         console.error('Error fetching OpenGraph data:', error)
-        setOpenGraphData(null)
+        // Set minimal OpenGraph data to allow saving the URL
+        setOpenGraphData({
+          title: pastedText,
+          description: 'Unable to fetch article preview',
+          url: pastedText,
+          image: null
+        })
       } finally {
         setFetchingData(false)
       }
