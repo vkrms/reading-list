@@ -43,6 +43,30 @@ function extractOpenGraphData(html: string, originalUrl: string): OpenGraphData 
   return data;
 }
 
+function isRedditUrl(url: URL): boolean {
+  return url.hostname === 'reddit.com' || 
+         url.hostname === 'www.reddit.com' || 
+         url.hostname.endsWith('.reddit.com');
+}
+
+async function fetchRedditOEmbed(url: string): Promise<OpenGraphData> {
+  const oembedUrl = `https://www.reddit.com/oembed?url=${encodeURIComponent(url)}`;
+  const response = await fetch(oembedUrl);
+  
+  if (!response.ok) {
+    throw new Error(`Reddit oEmbed failed: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  
+  return {
+    title: data.title || 'Reddit Post',
+    description: data.author_name ? `Posted by ${data.author_name}` : undefined,
+    image: data.thumbnail_url || undefined,
+    url: url
+  };
+}
+
 Deno.serve(async (req: Request) => {
   try {
     if (req.method === "OPTIONS") {
@@ -98,6 +122,26 @@ Deno.serve(async (req: Request) => {
           },
         }
       );
+    }
+
+    // Check if it's a Reddit URL and use oEmbed API
+    if (isRedditUrl(validUrl)) {
+      try {
+        const openGraphData = await fetchRedditOEmbed(validUrl.toString());
+        return new Response(
+          JSON.stringify(openGraphData),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } catch (error) {
+        console.error('Reddit oEmbed failed, falling back to scraping:', error);
+        // Fall through to regular scraping if Reddit API fails
+      }
     }
 
     // Fetch the webpage
