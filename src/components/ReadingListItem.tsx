@@ -62,11 +62,13 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
             </span>
           </div>
 
-          <h3 className={`text-lg font-semibold mb-2 ${
-            item.is_read ? 'text-gray-600 line-through' : 'text-gray-900'
-          }`}>
-            {item.title}
-          </h3>
+          <a href={item.url} target="_blank" rel="noopener noreferrer">
+            <h3 className={`text-lg font-semibold mb-2 leading-normal my-4 ${
+              item.is_read ? 'text-gray-600 line-through' : 'text-gray-900'
+            }`}>
+              {item.title}
+            </h3>
+          </a>
 
           {item.description && (
             <p className="text-gray-600 text-sm mb-3 line-clamp-4 max-w-[64ch]">
