@@ -42,9 +42,7 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
   }
 
   return (
-    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 border-l-4 ${
-      item.is_read ? 'border-emerald-400 opacity-75' : 'border-blue-400'
-    }`}>
+    <div className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 max-w-[712px]`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
@@ -71,7 +69,7 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
           </h3>
 
           {item.description && (
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2 max-w-[64ch]">
+            <p className="text-gray-600 text-sm mb-3 line-clamp-4 max-w-[64ch]">
               {item.description}
             </p>
           )}
