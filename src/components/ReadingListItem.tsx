@@ -62,7 +62,12 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
             </span>
           </div>
 
-          <a href={item.url} target="_blank" rel="noopener noreferrer">
+          <a 
+            href={item.url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <h3 className={`text-lg font-semibold mb-2 leading-normal my-4 ${
               item.is_read ? 'text-gray-600 line-through' : 'text-gray-900'
             }`}>
