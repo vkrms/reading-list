@@ -106,8 +106,8 @@ export function ReadingListItem({ item, onToggleRead, onDelete, onUpdate }: Read
           )}
 
           {item.text_note && !isEditingNote && (
-            <div className="mt-4 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg mb-4">
-              <div className="flex items-center gap-2 mb-1 text-amber-800 font-medium text-sm">
+            <div className="mt-4 p-3 bg-gray-50 border-l-4 border-gray-300 rounded-r-lg mb-4">
+              <div className="flex items-center gap-2 mb-1 text-gray-700 font-medium text-sm">
                 <StickyNote className="w-4 h-4" />
                 Note
               </div>
