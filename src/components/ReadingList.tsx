@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 
 export function ReadingList() {
   const { user, signOut } = useAuth()
-  const { items, loading, addItem, toggleRead, deleteItem } = useReadingList(user?.id)
+  const { items, loading, addItem, toggleRead, deleteItem, updateItem } = useReadingList(user?.id)
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
 
   const filteredItems = useMemo(() => {
@@ -148,6 +148,7 @@ export function ReadingList() {
                 item={item}
                 onToggleRead={toggleRead}
                 onDelete={deleteItem}
+                onUpdate={updateItem}
               />
             ))}
           </div>

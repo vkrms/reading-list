@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ExternalLink, Check, X, Trash2, BookOpen } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { ExternalLink, Check, X, Trash2, BookOpen, StickyNote } from 'lucide-react'
 import type { Database } from '../lib/supabase'
 
 type ReadingListItem = Database['public']['Tables']['reading_list_items']['Row']
@@ -8,11 +8,20 @@ interface ReadingListItemProps {
   item: ReadingListItem
   onToggleRead: (id: string, isRead: boolean) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  onUpdate: (id: string, updates: Partial<ReadingListItem>) => Promise<any>
 }
 
-export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListItemProps) {
+export function ReadingListItem({ item, onToggleRead, onDelete, onUpdate }: ReadingListItemProps) {
   const [loading, setLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isEditingNote, setIsEditingNote] = useState(false)
+  const [noteValue, setNoteValue] = useState(item.text_note || '')
+
+  useEffect(() => {
+    if (!isEditingNote) {
+      setNoteValue(item.text_note || '')
+    }
+  }, [item.text_note, isEditingNote])
 
   const handleToggleRead = async () => {
     setLoading(true)
@@ -31,6 +40,21 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
       setLoading(false)
       setShowDeleteConfirm(false)
     }
+  }
+
+  const handleSaveNote = async () => {
+    setLoading(true)
+    try {
+      await onUpdate(item.id, { text_note: noteValue.trim() || null })
+      setIsEditingNote(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancelNote = () => {
+    setNoteValue(item.text_note || '')
+    setIsEditingNote(false)
   }
 
   const formatDate = (dateString: string) => {
@@ -81,6 +105,50 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
             </p>
           )}
 
+          {item.text_note && !isEditingNote && (
+            <div className="mt-4 p-3 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg mb-4">
+              <div className="flex items-center gap-2 mb-1 text-amber-800 font-medium text-sm">
+                <StickyNote className="w-4 h-4" />
+                Note
+              </div>
+              <p className="text-gray-700 text-sm whitespace-pre-wrap line-clamp-[8]">
+                {item.text_note}
+              </p>
+            </div>
+          )}
+
+          {isEditingNote && (
+            <div className="mt-4 space-y-2 mb-4">
+              <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
+                <StickyNote className="w-4 h-4" />
+                {item.text_note ? 'Edit Note' : 'Add Note'}
+              </div>
+              <textarea
+                value={noteValue}
+                onChange={(e) => setNoteValue(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm min-h-[100px]"
+                placeholder="Add your thoughts about this article..."
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={handleCancelNote}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveNote}
+                  disabled={loading}
+                  className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loading && <Check className="w-4 h-4 animate-pulse" />}
+                  Save Note
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             <a
               href={item.url}
@@ -113,27 +181,39 @@ export function ReadingListItem({ item, onToggleRead, onDelete }: ReadingListIte
       </div>
 
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-        <button
-          onClick={handleToggleRead}
-          disabled={loading}
-          className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-            item.is_read
-              ? 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
-              : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
-          }`}
-        >
-          {item.is_read ? (
-            <>
-              <X className="w-4 h-4" />
-              Mark Unread
-            </>
-          ) : (
-            <>
-              <Check className="w-4 h-4" />
-              Mark as Read
-            </>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleToggleRead}
+            disabled={loading}
+            className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              item.is_read
+                ? 'text-gray-600 hover:text-gray-700 hover:bg-gray-100'
+                : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
+            }`}
+          >
+            {item.is_read ? (
+              <>
+                <X className="w-4 h-4" />
+                Mark Unread
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                Mark as Read
+              </>
+            )}
+          </button>
+
+          {!isEditingNote && (
+            <button
+              onClick={() => setIsEditingNote(true)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <StickyNote className="w-4 h-4" />
+              {item.text_note ? 'Edit Note' : 'Add Note'}
+            </button>
           )}
-        </button>
+        </div>
 
         {showDeleteConfirm ? (
           <div className="flex items-center gap-2">
