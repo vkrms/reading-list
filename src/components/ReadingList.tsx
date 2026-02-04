@@ -81,7 +81,7 @@ export function ReadingList() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 w-fit">
+      <main className="max-w-[712px] mx-auto px-4 py-8 w-fit box-content">
         {/* Add URL Form */}
         <AddUrlForm onAdd={handleAddUrl} existingItems={items} />
 
