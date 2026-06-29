@@ -4,12 +4,24 @@ import { ReadingListItem } from './ReadingListItem'
 import { AddUrlForm } from './AddUrlForm'
 import { BookOpen, Filter, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import type { OpenGraphData } from '../hooks/useReadingList'
 import toast from 'react-hot-toast'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+
+type ReadingListFilter = 'all' | 'unread' | 'read'
 
 export function ReadingList() {
   const { user, signOut } = useAuth()
   const { items, loading, addItem, toggleRead, deleteItem, updateItem } = useReadingList(user?.id)
-  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
+  const [filter, setFilter] = useState<ReadingListFilter>('all')
 
   const filteredItems = useMemo(() => {
     switch (filter) {
@@ -29,17 +41,23 @@ export function ReadingList() {
     return { total, unread, read }
   }, [items])
 
+  const allTags = useMemo(
+    () => Array.from(new Set(items.map((i) => i.tag).filter(Boolean))).sort(),
+    [items]
+  )
+
   const handleSignOut = async () => {
     try {
       await signOut()
       toast.success('Signed out successfully')
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to sign out'
+      toast.error(message)
     }
   }
 
-  const handleAddUrl = async (url: string, openGraphData: any) => {
-    await addItem(url, openGraphData)
+  const handleAddUrl = async (url: string, tag: string, openGraphData: OpenGraphData) => {
+    await addItem(url, tag, openGraphData)
   }
 
   if (loading) {
@@ -70,14 +88,14 @@ export function ReadingList() {
               </p>
             </div>
           </div>
-
-          <button
+          <Button
             onClick={handleSignOut}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            variant="ghost"
+            className="gap-2 text-gray-600 hover:text-gray-700"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -86,37 +104,41 @@ export function ReadingList() {
         <AddUrlForm onAdd={handleAddUrl} existingItems={items} />
 
         {/* Stats and Filter */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <Card className="mb-6 border-white/70 bg-white/95 shadow-xl shadow-slate-200/50 backdrop-blur">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-                <div className="text-sm text-gray-600">Total Articles</div>
+                <div className="text-2xl font-bold text-slate-950">{stats.total}</div>
+                <div className="text-sm text-slate-600">Total Articles</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{stats.unread}</div>
-                <div className="text-sm text-gray-600">Unread</div>
+                <div className="text-sm text-slate-600">Unread</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-600">{stats.read}</div>
-                <div className="text-sm text-gray-600">Read</div>
+                <div className="text-sm text-slate-600">Read</div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <select
+              <Filter className="h-4 w-4 text-slate-500" />
+              <Select
                 value={filter}
-                onChange={(e) => setFilter(e.target.value as any)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onValueChange={(value) => setFilter(value as ReadingListFilter)}
               >
-                <option value="all">All Articles</option>
-                <option value="unread">Unread Only</option>
-                <option value="read">Read Only</option>
-              </select>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter articles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Articles</SelectItem>
+                  <SelectItem value="unread">Unread Only</SelectItem>
+                  <SelectItem value="read">Read Only</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Reading List */}
         {filteredItems.length === 0 ? (
@@ -126,18 +148,19 @@ export function ReadingList() {
               {filter === 'all' ? 'No articles yet' : `No ${filter} articles`}
             </h3>
             <p className="text-gray-600 mb-6">
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'Add your first article by entering a URL above'
                 : `You don't have any ${filter} articles`
               }
             </p>
             {filter !== 'all' && (
-              <button
+              <Button
                 onClick={() => setFilter('all')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                variant="link"
+                className="text-blue-600 hover:text-blue-700"
               >
                 Show all articles
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -146,6 +169,7 @@ export function ReadingList() {
               <ReadingListItem
                 key={item.id}
                 item={item}
+                allTags={allTags}
                 onToggleRead={toggleRead}
                 onDelete={deleteItem}
                 onUpdate={updateItem}

@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { BookOpen, Mail, Lock, User, AlertCircle } from 'lucide-react'
+import { BookOpen, Mail, Lock, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export function AuthForm() {
   const { signIn, signUp } = useAuth()
@@ -22,7 +27,7 @@ export function AuthForm() {
     setError('')
 
     try {
-      const { error } = isSignUp 
+      const { error } = isSignUp
         ? await signUp(email, password)
         : await signIn(email, password)
 
@@ -33,9 +38,10 @@ export function AuthForm() {
       } else {
         toast.success('Welcome back!')
       }
-    } catch (error: any) {
-      setError(error.message)
-      toast.error(error.message)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Authentication failed'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -52,83 +58,86 @@ export function AuthForm() {
           <p className="text-gray-600">Save articles from around the web</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+        <Card className="border-white/70 bg-white/95 shadow-xl shadow-slate-200/60 backdrop-blur">
+          <CardHeader className="mb-2">
+            <CardTitle className="text-2xl text-slate-950">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
-            </h2>
-            <p className="text-gray-600">
+            </CardTitle>
+            <CardDescription>
               {isSignUp ? 'Sign up to start building your reading list' : 'Sign in to access your reading list'}
-            </p>
-          </div>
+            </CardDescription>
+          </CardHeader>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
+            <Alert variant="destructive" className="mx-6 mb-4">
               <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">{error}</span>
-            </div>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your email"
-                  required
-                />
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  Email Address
+                </Label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-11 pl-10"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your password"
-                  minLength={6}
-                  required
-                />
+              <div className="space-y-2">
+                <Label htmlFor="password">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-11 pl-10"
+                    placeholder="Enter your password"
+                    minLength={6}
+                    required
+                  />
+                </div>
               </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-11 w-full bg-gradient-to-r from-blue-500 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:from-blue-600 hover:to-emerald-600"
+              >
+                {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp)
+                  setError('')
+                }}
+                variant="link"
+                className="h-auto p-0 text-blue-600 hover:text-blue-700"
+              >
+                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </Button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-emerald-500 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
-            >
-              {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp)
-                setError('')
-              }}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-            </button>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
