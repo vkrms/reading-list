@@ -5,6 +5,13 @@ import toast from 'react-hot-toast'
 
 type ReadingListItem = Database['public']['Tables']['reading_list_items']['Row']
 
+export interface OpenGraphData {
+  title: string
+  description: string | null
+  image: string | null
+  url?: string
+}
+
 export function useReadingList(userId: string | undefined) {
   const [items, setItems] = useState<ReadingListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,7 +39,7 @@ export function useReadingList(userId: string | undefined) {
     }
   }
 
-  const addItem = async (url: string, openGraphData: any) => {
+  const addItem = async (url: string, tag: string, openGraphData: OpenGraphData) => {
     if (!userId) return
 
     try {
@@ -43,13 +50,14 @@ export function useReadingList(userId: string | undefined) {
           url,
           title: openGraphData.title,
           description: openGraphData.description,
-          image_url: openGraphData.image
+          image_url: openGraphData.image,
+          tag
         })
         .select()
         .single()
 
       if (error) throw error
-      
+
       setItems(prev => [data, ...prev])
       toast.success('Article added to reading list')
       return data
